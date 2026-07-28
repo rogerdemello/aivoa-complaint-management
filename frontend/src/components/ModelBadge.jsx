@@ -20,7 +20,7 @@ export default function ModelBadge() {
     <span className={`model-badge ${substituted.length ? 'substituted' : ''}`} title={title}>
       <span className="dot" />
       {substituted.length
-        ? `${substituted.length} model substituted`
+        ? `${substituted.length} model${substituted.length === 1 ? '' : 's'} substituted`
         : `${health.roles.length} models live`}
     </span>
   )

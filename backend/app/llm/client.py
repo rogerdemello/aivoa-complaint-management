@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+import random
 import re
 from typing import Any
 
@@ -42,6 +44,25 @@ def get_chat(
     )
 
 
+# The enrichment fan-out fires four reasoner calls at once, which trips Groq's
+# tokens-per-minute limit on the free tier. Per-minute limits clear quickly, so
+# a short wait recovers; per-day limits report a wait of many minutes and are
+# not worth blocking a request for.
+MAX_RETRIES = 2
+MAX_RETRY_WAIT_SECONDS = 30.0
+_RETRY_AFTER_RE = re.compile(r"try again in (?:(\d+(?:\.\d+)?)m)?(\d+(?:\.\d+)?)s")
+
+
+def _retry_delay(message: str, attempt: int) -> float:
+    """How long to wait, preferring Groq's own hint over backoff."""
+    match = _RETRY_AFTER_RE.search(message)
+    if match:
+        minutes = float(match.group(1) or 0.0)
+        seconds = float(match.group(2))
+        return minutes * 60.0 + seconds + 0.5
+    return min(2.0**attempt, 8.0) + random.random()
+
+
 async def complete(
     role: ModelRole,
     system: str,
@@ -51,14 +72,44 @@ async def complete(
     json_mode: bool = False,
     max_tokens: int | None = None,
 ) -> str:
-    """Run one completion and return the raw text."""
+    """Run one completion and return the raw text, retrying on rate limits."""
     chat = get_chat(
         role, temperature=temperature, json_mode=json_mode, max_tokens=max_tokens
     )
-    response = await chat.ainvoke(
-        [SystemMessage(content=system), HumanMessage(content=user)]
-    )
-    return response.content if isinstance(response.content, str) else str(response.content)
+    messages = [SystemMessage(content=system), HumanMessage(content=user)]
+
+    for attempt in range(MAX_RETRIES + 1):
+        try:
+            response = await chat.ainvoke(messages)
+            return (
+                response.content
+                if isinstance(response.content, str)
+                else str(response.content)
+            )
+        except Exception as exc:
+            text = str(exc)
+            if "429" not in text and "rate_limit" not in text:
+                raise
+            if attempt == MAX_RETRIES:
+                raise
+
+            delay = _retry_delay(text, attempt)
+            if delay > MAX_RETRY_WAIT_SECONDS:
+                # A multi-minute wait means the daily budget is gone, not a
+                # burst. Fail now so the node degrades instead of hanging.
+                log.warning(
+                    "%s rate limited for %.0fs (daily quota); not retrying.",
+                    registry.get(role), delay,
+                )
+                raise
+
+            log.info(
+                "%s rate limited; retrying in %.1fs (attempt %d/%d).",
+                registry.get(role), delay, attempt + 1, MAX_RETRIES,
+            )
+            await asyncio.sleep(delay)
+
+    raise RuntimeError("unreachable")
 
 
 def parse_json_object(text: str) -> dict:

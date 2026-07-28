@@ -249,7 +249,11 @@ textarea.field-input { resize: vertical; min-height: 68px; line-height: 1.5; }
 
 /* --- Copilot --------------------------------------------------------------- */
 
-.copilot { display: flex; flex-direction: column; max-height: calc(100vh - 120px); }
+/* No max-height here. `.card` sets overflow:hidden for its rounded corners, so
+   capping the copilot's height silently clips the assessment panels below the
+   fold instead of scrolling them. The chat log scrolls internally instead, and
+   the card grows to fit the panels. */
+.copilot { display: flex; flex-direction: column; }
 
 .dropzone {
   margin: 0 16px 12px;
@@ -276,6 +280,7 @@ textarea.field-input { resize: vertical; min-height: 68px; line-height: 1.5; }
   flex-direction: column;
   gap: 10px;
   min-height: 160px;
+  max-height: 42vh;
 }
 
 .msg { padding: 9px 12px; border-radius: var(--radius); font-size: 12.5px; line-height: 1.55; }

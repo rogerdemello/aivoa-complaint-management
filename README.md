@@ -350,3 +350,13 @@ Stated plainly rather than discovered in the interview:
   intended mitigation rather than a claim of perfect extraction.
 - **Duplicate detection scans a bounded candidate set** (25 by trigram, 300 rows in the
   rapidfuzz fallback). Fine at demo scale; a real deployment needs embeddings and an index.
+- **Groq's free tier will rate-limit this.** The parallel fan-out issues four reasoner
+  calls at once, which trips the tokens-per-minute limit. `llm/client.py` retries with
+  backoff, preferring Groq's own `try again in Xs` hint, and gives up immediately when the
+  wait indicates the *daily* cap rather than a burst. If you exhaust the daily budget on
+  one model, point `AIVOA_MODEL_REASONER` at another — that is the whole point of the
+  role-based registry, and it needs no code change.
+
+  `.env` currently sets `AIVOA_MODEL_REASONER=openai/gpt-oss-120b` for exactly this
+  reason; revert it to `llama-3.3-70b-versatile` (the assignment's stated secondary model)
+  once quota resets, if you prefer.

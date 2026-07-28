@@ -42,7 +42,10 @@ async def _trigram_candidates(
                        :signature
                    ) AS score
             FROM complaints
-            WHERE (:exclude_id IS NULL OR id <> :exclude_id)
+            -- Cast explicitly: on the first turn there is no complaint to
+            -- exclude, and psycopg cannot infer the type of an untyped NULL
+            -- in `id <> $n`, which fails the whole query.
+            WHERE (CAST(:exclude_id AS uuid) IS NULL OR id <> CAST(:exclude_id AS uuid))
               AND status <> 'draft'
             ORDER BY score DESC
             LIMIT :limit

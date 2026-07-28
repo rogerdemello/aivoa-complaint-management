@@ -65,16 +65,18 @@ async function streamPost(url, init, onEvent) {
 
     buffer += decoder.decode(value, { stream: true })
 
-    // Frames are separated by a blank line. The trailing element is a partial
-    // frame, so it stays in the buffer until more bytes arrive.
-    const frames = buffer.split('\n\n')
+    // Frames are separated by a blank line. Per the SSE spec a line break may
+    // be CRLF, LF or CR, and sse-starlette emits CRLF - so splitting on '\n\n'
+    // alone silently matches nothing and every event stays stuck in the buffer.
+    // The trailing element is a partial frame; it waits for more bytes.
+    const frames = buffer.split(/\r\n\r\n|\n\n|\r\r/)
     buffer = frames.pop() ?? ''
 
     for (const frame of frames) {
       let name = 'message'
       const dataLines = []
 
-      for (const line of frame.split('\n')) {
+      for (const line of frame.split(/\r\n|\n|\r/)) {
         if (line.startsWith(':')) continue // keep-alive comment
         if (line.startsWith('event:')) name = line.slice(6).trim()
         else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim())
