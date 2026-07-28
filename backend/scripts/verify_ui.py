@@ -152,7 +152,43 @@ async def main() -> None:
         check(await page.is_visible("text=21 CFR Part 11"), "Part 11 attribution shown")
         await page.screenshot(path=SHOTS / "05-audit.png", full_page=True)
 
-        print("\n7. Console")
+        print("\n7. Document Extraction (fresh session, real dropzone)")
+        pdf = Path(__file__).resolve().parents[2] / "samples" / "metformin_api_complaint.pdf"
+        await page.reload(wait_until="networkidle")
+        await page.wait_for_selector("text=Log Customer Complaint", timeout=30_000)
+
+        before_upload = await page.locator(".msg.assistant").count()
+        # The file input is visually hidden behind the dropzone; Playwright can
+        # still set files on it, which is exactly what clicking it would do.
+        await page.set_input_files("input[type=file]", str(pdf))
+
+        deadline = TURN_TIMEOUT
+        while deadline > 0:
+            if (
+                await page.locator(".msg.assistant").count() > before_upload
+                and not await page.locator(".messages .spinner").count()
+            ):
+                break
+            await page.wait_for_timeout(500)
+            deadline -= 500
+        await page.wait_for_timeout(800)
+
+        doc_product = await value_of(page, "product_name")
+        doc_grade = await value_of(page, "product_strength_grade")
+        doc_batch = await value_of(page, "batch_lot_number")
+        print(f"     product_name           = {doc_product!r}")
+        print(f"     product_strength_grade = {doc_grade!r}")
+        print(f"     batch_lot_number       = {doc_batch!r}")
+        check("Metformin" in doc_product, "API product extracted from the PDF")
+        check("IP" in doc_grade.upper(), "compendial grade extracted from the PDF")
+        check(bool(doc_batch), "batch extracted from the PDF")
+        check(
+            await page.locator(".src-badge.document").count() > 0,
+            "fields attributed to the document source",
+        )
+        await page.screenshot(path=SHOTS / "06-document.png", full_page=True)
+
+        print("\n8. Console")
         real = [e for e in console_errors if "favicon" not in e.lower()]
         check(not real, f"no console errors ({real[:2] if real else 'clean'})")
 
