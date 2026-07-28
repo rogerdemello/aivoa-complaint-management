@@ -1,0 +1,28 @@
+COMPLAINT INTAKE FORM - TELEPHONE RECORD
+
+Received by   : N. Fernandes, Complaint Coordinator
+Date received : 22 July 2026, 14:20 IST
+Source        : Telephone
+Caller        : Dr. Anand Krishnan, Chief Pharmacist
+Organisation  : Cipla Distribution, Hyderabad
+
+PRODUCT
+  Name        : Pantoprazole Gastro-resistant Tablets IP
+  Strength    : 40 mg
+  Batch       : PNT26D118
+  Mfg date    : 05 April 2026
+  Expiry      : 04 April 2028
+  Qty affected: 120 tablets (4 boxes)
+
+COMPLAINT
+  Caller reports that the outer carton for four boxes carries a printed expiry
+  date of 04/2028 while the blister foil inside the same cartons is printed
+  04/2027. The batch number on carton and foil match. No physical defect was
+  observed in the tablets themselves.
+
+  Caller states the discrepancy was noticed during routine goods-in checks and
+  that the affected cartons have been segregated. He has asked for urgent
+  clarification as the stock is otherwise ready for dispatch to retail.
+
+INITIAL REMARKS
+  Potential labelling/artwork control issue. Escalated to QA the same day.

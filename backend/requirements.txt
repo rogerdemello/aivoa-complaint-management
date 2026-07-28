@@ -1,0 +1,38 @@
+# --- Web framework -----------------------------------------------------------
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-multipart>=0.0.12
+sse-starlette>=2.1.3
+
+# --- Config / validation -----------------------------------------------------
+pydantic>=2.9.0
+pydantic-settings>=2.6.0
+python-dotenv>=1.0.1
+
+# --- Database ----------------------------------------------------------------
+# psycopg3 is used for BOTH the SQLAlchemy ORM and LangGraph's Postgres
+# checkpointer, so the app ships a single Postgres driver.
+sqlalchemy[asyncio]>=2.0.36
+psycopg[binary,pool]>=3.2.3
+alembic>=1.14.0
+
+# --- AI ----------------------------------------------------------------------
+langgraph>=0.2.45
+langgraph-checkpoint-postgres>=2.0.2
+langchain-core>=0.3.15
+langchain-groq>=0.2.1
+groq>=0.13.0
+httpx>=0.27.2
+
+# --- Document parsing --------------------------------------------------------
+pypdf>=5.1.0
+
+# --- Demo asset generation ---------------------------------------------------
+reportlab>=4.2.5
+
+# --- Duplicate detection fallback (used when pg_trgm is unavailable) ----------
+rapidfuzz>=3.10.1
+
+# --- Tests -------------------------------------------------------------------
+pytest>=8.3.3
+pytest-asyncio>=0.24.0
